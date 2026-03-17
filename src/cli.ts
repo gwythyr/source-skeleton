@@ -6,13 +6,15 @@ import { format, render } from './formatter.js';
 const HELP_TEXT = `Usage: source-skeleton <file.ts|file.js>
        source-skeleton --mcp
        source-skeleton --init [--global]
+       source-skeleton --uninit [--global]
        source-skeleton --help
 
 Options:
   <file>     Generate skeleton view of a TypeScript/JavaScript file
   --mcp      Start MCP server for Claude Code integration
   --init     Add source-skeleton config to CLAUDE.md in current directory
-  --global   With --init: configure in ~/.claude/CLAUDE.md instead
+  --uninit   Remove source-skeleton config from CLAUDE.md in current directory
+  --global   With --init/--uninit: configure in ~/.claude/CLAUDE.md instead
   --help     Show this help message
 `;
 
@@ -34,6 +36,17 @@ async function main(): Promise<void> {
     try {
       const { init } = await import('./init.js');
       init({ global: args.includes('--global') });
+    } catch (err) {
+      process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+      process.exit(1);
+    }
+    return;
+  }
+
+  if (args.includes('--uninit')) {
+    try {
+      const { uninit } = await import('./uninit.js');
+      uninit({ global: args.includes('--global') });
     } catch (err) {
       process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
       process.exit(1);

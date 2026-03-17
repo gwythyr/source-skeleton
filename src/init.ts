@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const SNIPPET = `
+export const SNIPPET = `
 ## File Definitions (source-skeleton)
 
 Get structural overview without reading full implementation:
