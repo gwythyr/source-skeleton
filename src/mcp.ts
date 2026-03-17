@@ -1,5 +1,9 @@
 import { readFileSync, existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { skeleton } from './skeleton.js';
@@ -43,13 +47,13 @@ export async function handleSkeletonTool(file: string): Promise<McpToolResult> {
 export async function startMcpServer(): Promise<void> {
   const server = new McpServer({
     name: 'source-skeleton',
-    version: '0.1.0',
+    version,
   });
 
   server.tool(
     'source_skeleton',
     'Generate a collapsed skeleton view of a TypeScript/JavaScript file. Shows imports, types, signatures with function bodies collapsed. Annotates collapsed blocks with external dependency calls.',
-    { file: z.string().describe('Path to a .ts or .js file') },
+    { file: z.string().describe('Absolute path to a .ts or .js file') },
     async ({ file }) => handleSkeletonTool(file),
   );
 

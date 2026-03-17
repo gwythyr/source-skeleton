@@ -52,7 +52,7 @@ export function init(options: InitOptions = {}): void {
 
   if (existsSync(targetPath)) {
     const content = readFileSync(targetPath, 'utf-8');
-    if (content.includes('source-skeleton')) {
+    if (content.includes('## File Definitions (source-skeleton)')) {
       process.stdout.write(`source-skeleton is already configured in ${targetPath}\n`);
       return;
     }

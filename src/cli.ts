@@ -24,15 +24,20 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (args[0] === '--mcp') {
+  if (args.includes('--mcp')) {
     const { startMcpServer } = await import('./mcp.js');
     await startMcpServer();
     return;
   }
 
   if (args.includes('--init')) {
-    const { init } = await import('./init.js');
-    init({ global: args.includes('--global') });
+    try {
+      const { init } = await import('./init.js');
+      init({ global: args.includes('--global') });
+    } catch (err) {
+      process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+      process.exit(1);
+    }
     return;
   }
 
@@ -60,4 +65,7 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+main().catch((err) => {
+  process.stderr.write(`Fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.exit(1);
+});
