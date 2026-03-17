@@ -2,6 +2,7 @@
   "name": "source-skeleton",
   "version": "0.1.0",
   "description": "Generate collapsed skeleton views of TypeScript/JavaScript files for AI coding agents",
+  "type": "module",
   "bin": {
     "source-skeleton": "./dist/cli.js"
   },
@@ -10,7 +11,9 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "lint": "eslint src/",
+    "lint": "eslint src/ test/",
+    "check": "tsc --noEmit",
+    "ci": "npm run check && npm run lint && npm test",
     "prepublishOnly": "npm run build"
   },
   "engines": {
@@ -39,6 +42,7 @@
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.57.1",
     "vitest": "^3.0.0"
   }
 }

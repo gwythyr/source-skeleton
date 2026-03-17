@@ -1,5 +1,3 @@
-import type { SgNode } from '@ast-grep/napi';
-
 /** A collapsed function/method/arrow body in the skeleton */
 export interface CollapsedBlock {
   /** 1-indexed start line in original source */

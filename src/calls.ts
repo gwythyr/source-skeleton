@@ -1,5 +1,4 @@
 import { ts } from '@ast-grep/napi';
-import type { SgNode } from '@ast-grep/napi';
 import type { ExternalCall } from './types.js';
 
 /**
