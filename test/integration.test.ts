@@ -438,3 +438,308 @@ describe('CLI (dist/cli.js)', () => {
     expect(usageError).toBe(false);
   });
 });
+
+// ─── Gap-closing tests ────────────────────────────────────────────────────────
+
+describe('simple.js (JavaScript file support)', () => {
+  let result: SkeletonResult;
+  let output: string;
+
+  beforeAll(() => {
+    ({ result, output } = runPipeline('simple.js'));
+  });
+
+  it('produces output without errors', () => {
+    expect(output).toBeTruthy();
+    expect(output.length).toBeGreaterThan(0);
+  });
+
+  it('collapses function handleRequest', () => {
+    expect(output).toContain('function handleRequest(req, res)');
+    expect(output).toContain('{ /* ... */ }');
+  });
+
+  it('collapses arrow middleware', () => {
+    expect(output).toContain('const middleware = (req, res, next) =>');
+  });
+
+  it('collapses async function startServer', () => {
+    expect(output).toContain('async function startServer(port)');
+  });
+
+  it('leaves expression-body arrow unchanged', () => {
+    expect(output).toContain('const double = (x) => x * 2;');
+  });
+
+  it('has 3 collapsed blocks (handleRequest, middleware, startServer)', () => {
+    expect(result.collapsedBlocks).toHaveLength(3);
+  });
+
+  it('handles require() calls — no external identifiers from CJS', () => {
+    // require() is not an import statement, so no external identifiers detected
+    // This is expected behavior
+    expect(result.externalIdentifiers.size).toBe(0);
+  });
+});
+
+describe('getters-setters.ts', () => {
+  let result: SkeletonResult;
+  let output: string;
+
+  beforeAll(() => {
+    ({ result, output } = runPipeline('getters-setters.ts'));
+  });
+
+  it('produces output without errors', () => {
+    expect(output).toBeTruthy();
+  });
+
+  it('collapses getter bodies', () => {
+    expect(output).toContain('get name(): string');
+    expect(output).toContain('get port(): number');
+  });
+
+  it('collapses setter bodies', () => {
+    expect(output).toContain('set name(value: string)');
+    expect(output).toContain('set port(value: number)');
+  });
+
+  it('collapses regular method body', () => {
+    expect(output).toContain('getAddress(): string');
+  });
+
+  it('has 5 collapsed blocks (2 getters + 2 setters + 1 method)', () => {
+    expect(result.collapsedBlocks).toHaveLength(5);
+  });
+
+  it('annotates getter/setter with logger calls', () => {
+    expect(output).toContain('→ logger.debug()');
+    expect(output).toContain('→ logger.info()');
+  });
+
+  it('preserves class declaration and field declarations', () => {
+    expect(output).toContain('export class Config {');
+    expect(output).toContain("private _name: string = '';");
+    expect(output).toContain('private _port: number = 3000;');
+  });
+});
+
+describe('multiple-classes.ts', () => {
+  let result: SkeletonResult;
+  let output: string;
+
+  beforeAll(() => {
+    ({ result, output } = runPipeline('multiple-classes.ts'));
+  });
+
+  it('produces output without errors', () => {
+    expect(output).toBeTruthy();
+  });
+
+  it('preserves all three class declarations', () => {
+    expect(output).toContain('export class Animal {');
+    expect(output).toContain('export class Dog extends Animal {');
+    expect(output).toContain('export class Zoo {');
+  });
+
+  it('collapses all method bodies across all classes', () => {
+    const collapsedCount = (output.match(/\{ \/\* \.\.\. \*\/ \}/g) || []).length;
+    // Animal: constructor + speak = 2
+    // Dog: constructor + fetch = 2
+    // Zoo: constructor + add + count = 3
+    expect(collapsedCount).toBe(7);
+  });
+
+  it('has 7 collapsed blocks total', () => {
+    expect(result.collapsedBlocks).toHaveLength(7);
+  });
+
+  it('injectedServices contains params from all constructors', () => {
+    expect(result.injectedServices.has('name')).toBe(true);
+    expect(result.injectedServices.has('sound')).toBe(true);
+    expect(result.injectedServices.has('emitter')).toBe(true);
+  });
+
+  it('annotates Zoo.add with emitter.emit()', () => {
+    expect(output).toContain('→ emitter.emit()');
+  });
+});
+
+describe('overloads.ts', () => {
+  let result: SkeletonResult;
+  let output: string;
+
+  beforeAll(() => {
+    ({ result, output } = runPipeline('overloads.ts'));
+  });
+
+  it('produces output without errors', () => {
+    expect(output).toBeTruthy();
+  });
+
+  it('preserves overload signatures (no body to collapse)', () => {
+    expect(output).toContain('function format(value: string): string;');
+    expect(output).toContain('function format(value: number): string;');
+  });
+
+  it('collapses the implementation signature body', () => {
+    expect(output).toContain('function format(value: string | number): string');
+    expect(output).toContain('{ /* ... */ }');
+  });
+
+  it('preserves class method overload signatures', () => {
+    expect(output).toContain('process(input: string): string;');
+    expect(output).toContain('process(input: number): number;');
+  });
+
+  it('collapses the class method implementation body', () => {
+    // The implementation with union types should be collapsed
+    expect(output).toContain('process(input: string | number): string | number');
+  });
+
+  it('has 2 collapsed blocks (format impl + process impl)', () => {
+    expect(result.collapsedBlocks).toHaveLength(2);
+  });
+
+  it('annotates format with logger.info()', () => {
+    expect(output).toContain('→ logger.info()');
+  });
+
+  it('annotates process with logger.debug()', () => {
+    expect(output).toContain('→ logger.debug()');
+  });
+
+  it('preserves interface definitions', () => {
+    expect(output).toContain('interface Serializer {');
+  });
+});
+
+describe('default-exports.ts', () => {
+  let result: SkeletonResult;
+  let output: string;
+
+  beforeAll(() => {
+    ({ result, output } = runPipeline('default-exports.ts'));
+  });
+
+  it('produces output without errors', () => {
+    expect(output).toBeTruthy();
+  });
+
+  it('collapses default exported function', () => {
+    expect(output).toContain('export default function main(args: string[]): void');
+    expect(output).toContain('{ /* ... */ }');
+  });
+
+  it('collapses helper function', () => {
+    expect(output).toContain('function helper(x: string): string');
+  });
+
+  it('has 2 collapsed blocks', () => {
+    expect(result.collapsedBlocks).toHaveLength(2);
+  });
+
+  it('annotates main with logger.info()', () => {
+    expect(output).toContain('→ logger.info()');
+  });
+
+  it('preserves named export statement', () => {
+    expect(output).toContain('export { helper };');
+  });
+});
+
+describe('re-exports.ts', () => {
+  let result: SkeletonResult;
+  let output: string;
+
+  beforeAll(() => {
+    ({ result, output } = runPipeline('re-exports.ts'));
+  });
+
+  it('produces output without errors', () => {
+    expect(output).toBeTruthy();
+  });
+
+  it('preserves re-export statements unchanged', () => {
+    expect(output).toContain("export { Router } from 'express';");
+    expect(output).toContain("export { readFile, writeFile } from 'fs/promises';");
+    expect(output).toContain("export type { Server } from 'http';");
+  });
+
+  it('does NOT include re-exported names in externalIdentifiers', () => {
+    // Re-exports are export_statement, not import_statement
+    // Router, readFile, writeFile from re-exports should not be in externalIdentifiers
+    expect(result.externalIdentifiers.has('Router')).toBe(false);
+    expect(result.externalIdentifiers.has('readFile')).toBe(false);
+    expect(result.externalIdentifiers.has('writeFile')).toBe(false);
+  });
+
+  it('includes directly imported names in externalIdentifiers', () => {
+    expect(result.externalIdentifiers.has('logger')).toBe(true);
+    expect(result.externalIdentifiers.has('helper')).toBe(true);
+  });
+
+  it('has 1 collapsed block (processData)', () => {
+    expect(result.collapsedBlocks).toHaveLength(1);
+  });
+
+  it('annotates processData with logger.info() and helper.transform()', () => {
+    expect(output).toContain('→ logger.info()');
+    expect(output).toContain('→ helper.transform()');
+  });
+});
+
+describe('empty file through full pipeline', () => {
+  it('handles empty string without errors', () => {
+    const result = skeleton('');
+    const lines = format(result);
+    const output = render(lines);
+    expect(output).toBeTruthy();
+    expect(result.collapsedBlocks).toHaveLength(0);
+    expect(result.externalCalls).toHaveLength(0);
+    expect(result.externalIdentifiers.size).toBe(0);
+    expect(result.injectedServices.size).toBe(0);
+  });
+
+  it('handles whitespace-only source', () => {
+    const result = skeleton('   \n\n  \n');
+    const lines = format(result);
+    const output = render(lines);
+    expect(output).toBeTruthy();
+    expect(result.collapsedBlocks).toHaveLength(0);
+  });
+
+  it('handles source with only comments', () => {
+    const result = skeleton('// just a comment\n/* block comment */\n');
+    const lines = format(result);
+    const output = render(lines);
+    expect(output).toContain('just a comment');
+    expect(result.collapsedBlocks).toHaveLength(0);
+  });
+});
+
+describe('malformed/invalid source', () => {
+  it('handles syntactically invalid TypeScript without throwing', () => {
+    const source = 'function broken( { return }}}';
+    expect(() => {
+      const result = skeleton(source);
+      format(result);
+    }).not.toThrow();
+  });
+
+  it('handles incomplete function declaration', () => {
+    const source = 'function incomplete(';
+    expect(() => {
+      const result = skeleton(source);
+      format(result);
+    }).not.toThrow();
+  });
+
+  it('handles random text', () => {
+    const source = 'this is not code at all, just text!!! @#$%^&*';
+    expect(() => {
+      const result = skeleton(source);
+      format(result);
+    }).not.toThrow();
+  });
+});
