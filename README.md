@@ -90,35 +90,44 @@ Collapsed blocks are followed by `→ dependency()` annotation lines showing whi
 
 Install globally and use `source-skeleton <file>` in your tool definitions or agent prompts to get compact, navigable overviews of large files without consuming excessive context.
 
-- **Claude Code**: see the [Claude Code Integration](#claude-code-integration) section below for MCP setup
+- **Claude Code**: see the [Claude Code Integration](#claude-code-integration) section below for setup options
 - **Codex / other agents**: install globally and reference in tool definitions
 
 ## Claude Code Integration
 
-### Quick Setup (MCP) — Recommended
+### Recommended: CLI + CLAUDE.md
 
-The easiest way to use source-skeleton in Claude Code is via MCP (Model Context Protocol). This makes `source_skeleton` available as a native tool that Claude can invoke directly:
+The most token-efficient way to use source-skeleton with Claude Code is via the CLI and CLAUDE.md. Claude Code already has a Bash tool — no extra setup or context overhead required.
+
+Install globally (or use `npx source-skeleton` for one-off runs):
+
+```bash
+npm install -g source-skeleton
+```
+
+Then run `--init` in your project to append usage instructions to your project's CLAUDE.md:
+
+```bash
+source-skeleton --init
+```
+
+This adds a `## File Definitions (source-skeleton)` section to CLAUDE.md, instructing Claude to use `source-skeleton <file>` when exploring unfamiliar files. Claude uses its existing Bash tool to call it — no additional tool schema injected into context.
+
+### Alternative: MCP
+
+If you prefer native MCP tool integration, you can register source-skeleton as an MCP server:
 
 ```bash
 claude mcp add source-skeleton -- npx -y source-skeleton --mcp
 ```
 
-After running this, Claude Code can call `source_skeleton` on any file without you needing to copy-paste output manually.
-
-### Alternative: CLI + CLAUDE.md
-
-If you prefer the CLI approach, install globally and run `--init` to add source-skeleton instructions to your project's CLAUDE.md:
-
-```bash
-npm install -g source-skeleton
-source-skeleton --init
-```
-
-This appends a `## File Definitions (source-skeleton)` section to your project's CLAUDE.md, instructing Claude to use the `source-skeleton` command when exploring unfamiliar files.
+This makes `source_skeleton` available as a dedicated tool Claude can invoke directly. However, MCP tools inject their schema into every conversation's context — even when the tool isn't used. For a simple file-in-text-out CLI like this, the Bash approach above is more efficient.
 
 ### Team Setup
 
-To share the MCP configuration with your team, add a `.mcp.json` file to your project root and commit it to version control:
+**CLI approach (recommended):** Commit your project's CLAUDE.md (with the `--init`-generated section) to version control. Everyone on the team gets source-skeleton instructions automatically.
+
+**MCP approach:** Add a `.mcp.json` file to your project root and commit it:
 
 ```json
 {
@@ -131,17 +140,9 @@ To share the MCP configuration with your team, add a `.mcp.json` file to your pr
 }
 ```
 
-Everyone on the team gets source-skeleton as a native Claude Code tool without any manual setup.
-
 ### Global Setup
 
-To make source-skeleton available across all your projects:
-
-```bash
-claude mcp add --scope user source-skeleton -- npx -y source-skeleton --mcp
-```
-
-Or with the CLI approach:
+To make source-skeleton available across all your projects with the CLI approach:
 
 ```bash
 npm install -g source-skeleton
@@ -149,6 +150,12 @@ source-skeleton --init --global
 ```
 
 The `--global` flag targets `~/.claude/CLAUDE.md` so the instructions apply in every project.
+
+To register globally as an MCP server instead:
+
+```bash
+claude mcp add --scope user source-skeleton -- npx -y source-skeleton --mcp
+```
 
 ## Requirements
 
