@@ -1,10 +1,11 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { SNIPPET } from './init.js';
+import { SNIPPET, SNIPPET_MARKER } from './init.js';
 import type { InitOptions } from './init.js';
 
-export type { InitOptions };
+// Module-level constant: avoids recompiling the regex on every call.
+const HEADING_ONLY = /^#\s*CLAUDE\.md\s*$/;
 
 export function uninit(options: InitOptions = {}): void {
   let targetPath: string;
@@ -23,7 +24,7 @@ export function uninit(options: InitOptions = {}): void {
 
   const content = readFileSync(targetPath, 'utf-8');
 
-  if (!content.includes('## File Definitions (source-skeleton)')) {
+  if (!content.includes(SNIPPET_MARKER)) {
     process.stdout.write(`source-skeleton is not configured in ${targetPath}\n`);
     return;
   }
@@ -36,10 +37,10 @@ export function uninit(options: InitOptions = {}): void {
     updated = content.split(SNIPPET).join('');
   }
 
-  // Trim trailing whitespace only
+  // trimEnd() normalizes trailing newlines: a file ending with \n\n becomes \n
+  // after an init+uninit round-trip. This is an accepted trade-off.
   updated = updated.trimEnd();
 
-  const HEADING_ONLY = /^#\s*CLAUDE\.md\s*$/;
   if (updated === '' || HEADING_ONLY.test(updated)) {
     rmSync(targetPath);
     process.stdout.write(`Removed source-skeleton config from ${targetPath}\n`);

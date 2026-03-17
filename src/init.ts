@@ -29,6 +29,9 @@ Example output:
 \`\`\`
 `;
 
+// Derived from SNIPPET so detection never drifts if the heading changes.
+export const SNIPPET_MARKER = SNIPPET.split('\n').find(line => line.trim().startsWith('#'))!;
+
 export interface InitOptions {
   global?: boolean;
   /** Override process.cwd() — for testing only */
@@ -52,7 +55,7 @@ export function init(options: InitOptions = {}): void {
 
   if (existsSync(targetPath)) {
     const content = readFileSync(targetPath, 'utf-8');
-    if (content.includes('## File Definitions (source-skeleton)')) {
+    if (content.includes(SNIPPET_MARKER)) {
       process.stdout.write(`source-skeleton is already configured in ${targetPath}\n`);
       return;
     }
