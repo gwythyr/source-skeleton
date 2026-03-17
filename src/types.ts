@@ -23,9 +23,9 @@ export interface SkeletonResult {
   /** External calls found in the original source */
   externalCalls: ExternalCall[];
   /** Set of identifiers from imports */
-  externalIdentifiers: Set<string>;
+  externalIdentifiers: ReadonlySet<string>;
   /** Set of constructor-injected service names */
-  injectedServices: Set<string>;
+  injectedServices: ReadonlySet<string>;
 }
 
 /** A single line of formatted skeleton output */

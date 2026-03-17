@@ -12,7 +12,7 @@
     "build": "tsc",
     "test": "vitest run",
     "lint": "eslint src/ test/",
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit -p tsconfig.test.json",
     "ci": "npm run check && npm run lint && npm test",
     "prepublishOnly": "npm run build"
   },
@@ -27,7 +27,18 @@
     "ai",
     "coding-agent"
   ],
+  "author": "Victor Shymko",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/victorshymko/source-skeleton.git"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist/",
     "README.md",
