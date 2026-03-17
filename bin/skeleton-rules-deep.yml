@@ -1,0 +1,219 @@
+id: skeleton-typed-fn
+language: typescript
+rule:
+  pattern: 'function $NAME($$$PARAMS): $RET { $$$BODY }'
+fix: 'function $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-untyped-fn
+language: typescript
+rule:
+  pattern: 'function $NAME($$$PARAMS) { $$$BODY }'
+fix: 'function $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-arrow-typed
+language: typescript
+rule:
+  pattern: 'const $NAME = ($$$PARAMS): $RET => { $$$BODY }'
+fix: 'const $NAME = ($$$PARAMS): $RET => { /* ... */ }'
+---
+id: skeleton-arrow
+language: typescript
+rule:
+  pattern: 'const $NAME = ($$$PARAMS) => { $$$BODY }'
+fix: 'const $NAME = ($$$PARAMS) => { /* ... */ }'
+---
+id: skeleton-async-arrow-typed
+language: typescript
+rule:
+  pattern: 'const $NAME = async ($$$PARAMS): $RET => { $$$BODY }'
+fix: 'const $NAME = async ($$$PARAMS): $RET => { /* ... */ }'
+---
+id: skeleton-async-arrow
+language: typescript
+rule:
+  pattern: 'const $NAME = async ($$$PARAMS) => { $$$BODY }'
+fix: 'const $NAME = async ($$$PARAMS) => { /* ... */ }'
+---
+id: skeleton-callback-arrow
+language: typescript
+rule:
+  pattern: '($$$PARAMS) => { $$$BODY }'
+fix: '($$$PARAMS) => { /* ... */ }'
+---
+id: skeleton-callback-async-arrow
+language: typescript
+rule:
+  pattern: 'async ($$$PARAMS) => { $$$BODY }'
+fix: 'async ($$$PARAMS) => { /* ... */ }'
+---
+id: skeleton-callback-function
+language: typescript
+rule:
+  pattern: 'function($$$PARAMS) { $$$BODY }'
+fix: 'function($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-callback-async-function
+language: typescript
+rule:
+  pattern: 'async function($$$PARAMS) { $$$BODY }'
+fix: 'async function($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: '$NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: '$NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-async-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { async $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'async $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-async-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { async $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'async $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-private-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { private $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'private $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-private-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { private $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'private $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-private-async-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { private async $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'private async $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-private-async-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { private async $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'private async $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-protected-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { protected $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'protected $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-protected-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { protected $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'protected $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-protected-async-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { protected async $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'protected async $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-protected-async-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { protected async $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'protected async $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-public-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { public $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'public $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-public-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { public $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'public $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-public-async-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { public async $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'public async $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-public-async-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { public async $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'public async $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-static-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { static $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'static $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-static-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { static $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'static $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-method-static-async-typed
+language: typescript
+rule:
+  pattern:
+    context: 'class A { static async $NAME($$$PARAMS): $RET { $$$BODY } }'
+    selector: method_definition
+fix: 'static async $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-method-static-async-untyped
+language: typescript
+rule:
+  pattern:
+    context: 'class A { static async $NAME($$$PARAMS) { $$$BODY } }'
+    selector: method_definition
+fix: 'static async $NAME($$$PARAMS) { /* ... */ }'

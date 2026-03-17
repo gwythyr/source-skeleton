@@ -1,0 +1,35 @@
+id: skeleton-typed-fn
+language: typescript
+rule:
+  pattern: 'function $NAME($$$PARAMS): $RET { $$$BODY }'
+fix: 'function $NAME($$$PARAMS): $RET { /* ... */ }'
+---
+id: skeleton-untyped-fn
+language: typescript
+rule:
+  pattern: 'function $NAME($$$PARAMS) { $$$BODY }'
+fix: 'function $NAME($$$PARAMS) { /* ... */ }'
+---
+id: skeleton-arrow-typed
+language: typescript
+rule:
+  pattern: 'const $NAME = ($$$PARAMS): $RET => { $$$BODY }'
+fix: 'const $NAME = ($$$PARAMS): $RET => { /* ... */ }'
+---
+id: skeleton-arrow
+language: typescript
+rule:
+  pattern: 'const $NAME = ($$$PARAMS) => { $$$BODY }'
+fix: 'const $NAME = ($$$PARAMS) => { /* ... */ }'
+---
+id: skeleton-async-arrow-typed
+language: typescript
+rule:
+  pattern: 'const $NAME = async ($$$PARAMS): $RET => { $$$BODY }'
+fix: 'const $NAME = async ($$$PARAMS): $RET => { /* ... */ }'
+---
+id: skeleton-async-arrow
+language: typescript
+rule:
+  pattern: 'const $NAME = async ($$$PARAMS) => { $$$BODY }'
+fix: 'const $NAME = async ($$$PARAMS) => { /* ... */ }'
