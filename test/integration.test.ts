@@ -1,4 +1,4 @@
-import { readFileSync, mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, existsSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execSync, spawnSync } from 'node:child_process';
@@ -436,6 +436,132 @@ describe('CLI (dist/cli.js)', () => {
     // Either timed out (signal) or closed stdin caused it to exit — neither should be exit code 1 from usage
     const usageError = result.stderr?.includes('Usage:') && result.status === 1;
     expect(usageError).toBe(false);
+  });
+});
+
+// ─── CLI --uninit integration tests ─────────────────────────────────────────
+
+describe('CLI --uninit', () => {
+  const CLI = join(import.meta.dirname, '..', 'dist', 'cli.js');
+
+  it('--uninit with no existing CLAUDE.md prints "not configured" and exits 0', () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), 'ss-cli-uninit-test-'));
+    try {
+      const stdout = execSync(`node "${CLI}" --uninit`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      expect(stdout).toContain('not configured');
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('--uninit removes snippet from CLAUDE.md created by --init', () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), 'ss-cli-uninit-test-'));
+    try {
+      // First, init to add the snippet
+      execSync(`node "${CLI}" --init`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      expect(existsSync(join(tmpDir, 'CLAUDE.md'))).toBe(true);
+
+      // Then uninit to remove it
+      const stdout = execSync(`node "${CLI}" --uninit`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      expect(stdout).toContain('Removed');
+      // File should be deleted since init created it from scratch
+      expect(existsSync(join(tmpDir, 'CLAUDE.md'))).toBe(false);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('--uninit removes snippet from CLAUDE.md while preserving existing content', () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), 'ss-cli-uninit-test-'));
+    try {
+      const originalContent = '# My Project\n\nExisting notes.\n';
+      writeFileSync(join(tmpDir, 'CLAUDE.md'), originalContent, 'utf-8');
+
+      execSync(`node "${CLI}" --init`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      execSync(`node "${CLI}" --uninit`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      const content = readFileSync(join(tmpDir, 'CLAUDE.md'), 'utf-8');
+      expect(content).toBe(originalContent);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('--uninit is idempotent — second call prints "not configured"', () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), 'ss-cli-uninit-test-'));
+    try {
+      execSync(`node "${CLI}" --init`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      execSync(`node "${CLI}" --uninit`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      const stdout = execSync(`node "${CLI}" --uninit`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      expect(stdout).toContain('not configured');
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('--uninit --global is recognised without a usage error', () => {
+    // We cannot safely mutate the real ~/.claude/CLAUDE.md in tests.
+    // At minimum, verify the flag combination is parsed without a CLI usage error.
+    // The expected output is either "not configured" (if snippet absent) or "Removed".
+    let threw = false;
+    let stdout = '';
+    try {
+      stdout = execSync(`node "${CLI}" --uninit --global`, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } catch (err: unknown) {
+      threw = true;
+      const e = err as { status: number; stderr: string };
+      // A usage error (exit 1 + "Usage:" in stderr) would be a bug
+      if (e.status === 1 && e.stderr?.includes('Usage:')) {
+        throw new Error(`--uninit --global caused a usage error: ${e.stderr}`);
+      }
+      // Any other error (e.g. permission, file-not-found on home) is acceptable
+    }
+    // If it succeeded without throwing, it must print a meaningful message
+    if (!threw) {
+      expect(stdout).toMatch(/not configured|Removed/);
+    }
+  });
+
+  it('help text includes --uninit', () => {
+    const stdout = execSync(`node "${CLI}" --help`, { encoding: 'utf-8' });
+    expect(stdout).toContain('--uninit');
   });
 });
 
