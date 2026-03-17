@@ -1,6 +1,6 @@
 {
   "name": "source-skeleton",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Generate collapsed skeleton views of TypeScript/JavaScript files for AI coding agents",
   "type": "module",
   "bin": {
@@ -35,7 +35,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/victorshymko/source-skeleton.git"
+    "url": "git+https://github.com/gwythyrv/source-skeleton.git"
+  },
+  "homepage": "https://github.com/gwythyrv/source-skeleton#readme",
+  "bugs": {
+    "url": "https://github.com/gwythyrv/source-skeleton/issues"
   },
   "exports": {
     ".": {
