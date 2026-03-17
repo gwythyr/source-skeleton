@@ -1,0 +1,32 @@
+{
+  "name": "source-skeleton",
+  "version": "0.1.0",
+  "description": "Generate collapsed skeleton views of TypeScript/JavaScript files for AI coding agents",
+  "bin": {
+    "source-skeleton": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint src/",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["ast", "skeleton", "typescript", "code-analysis", "ai", "coding-agent"],
+  "license": "MIT",
+  "files": ["dist/", "README.md", "LICENSE"],
+  "dependencies": {
+    "@ast-grep/napi": "^0.42.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0",
+    "eslint": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0"
+  }
+}
