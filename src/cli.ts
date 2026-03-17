@@ -3,9 +3,15 @@ import { existsSync, readFileSync } from 'node:fs';
 import { skeleton } from './skeleton.js';
 import { format, render } from './formatter.js';
 
-function main(): void {
+async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  
+
+  if (args[0] === '--mcp') {
+    const { startMcpServer } = await import('./mcp.js');
+    await startMcpServer();
+    return;
+  }
+
   if (args.length !== 1) {
     process.stderr.write('Usage: source-skeleton <file.ts|file.js>\n');
     process.exit(1);

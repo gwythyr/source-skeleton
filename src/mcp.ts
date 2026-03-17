@@ -1,0 +1,50 @@
+import { readFileSync, existsSync } from 'node:fs';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { z } from 'zod';
+import { skeleton } from './skeleton.js';
+import { format, render } from './formatter.js';
+
+export async function startMcpServer(): Promise<void> {
+  const server = new McpServer({
+    name: 'source-skeleton',
+    version: '0.1.0',
+  });
+
+  server.tool(
+    'source_skeleton',
+    'Generate a collapsed skeleton view of a TypeScript/JavaScript file. Shows imports, types, signatures with function bodies collapsed. Annotates collapsed blocks with external dependency calls.',
+    { file: z.string().describe('Path to a .ts or .js file') },
+    async ({ file }) => {
+      if (!existsSync(file)) {
+        return {
+          isError: true,
+          content: [{ type: 'text' as const, text: `File not found: ${file}` }],
+        };
+      }
+
+      try {
+        const source = readFileSync(file, 'utf-8');
+        const result = skeleton(source);
+        const lines = format(result);
+        const output = render(lines);
+        return {
+          content: [{ type: 'text' as const, text: output }],
+        };
+      } catch (err) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text' as const,
+              text: `Error processing file: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
