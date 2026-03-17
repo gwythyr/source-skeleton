@@ -26,7 +26,10 @@
     "typescript",
     "code-analysis",
     "ai",
-    "coding-agent"
+    "coding-agent",
+    "claude-code",
+    "mcp",
+    "model-context-protocol"
   ],
   "author": "Victor Shymko",
   "license": "MIT",

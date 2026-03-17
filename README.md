@@ -90,8 +90,65 @@ Collapsed blocks are followed by `→ dependency()` annotation lines showing whi
 
 Install globally and use `source-skeleton <file>` in your tool definitions or agent prompts to get compact, navigable overviews of large files without consuming excessive context.
 
-- **Claude Code**: install globally (`npm install -g source-skeleton`) or add as a custom tool
+- **Claude Code**: see the [Claude Code Integration](#claude-code-integration) section below for MCP setup
 - **Codex / other agents**: install globally and reference in tool definitions
+
+## Claude Code Integration
+
+### Quick Setup (MCP) — Recommended
+
+The easiest way to use source-skeleton in Claude Code is via MCP (Model Context Protocol). This makes `source_skeleton` available as a native tool that Claude can invoke directly:
+
+```bash
+claude mcp add source-skeleton -- npx -y source-skeleton --mcp
+```
+
+After running this, Claude Code can call `source_skeleton` on any file without you needing to copy-paste output manually.
+
+### Alternative: CLI + CLAUDE.md
+
+If you prefer the CLI approach, install globally and run `--init` to add source-skeleton instructions to your project's CLAUDE.md:
+
+```bash
+npm install -g source-skeleton
+source-skeleton --init
+```
+
+This appends a `## File Definitions (source-skeleton)` section to your project's CLAUDE.md, instructing Claude to use the `source-skeleton` command when exploring unfamiliar files.
+
+### Team Setup
+
+To share the MCP configuration with your team, add a `.mcp.json` file to your project root and commit it to version control:
+
+```json
+{
+  "mcpServers": {
+    "source-skeleton": {
+      "command": "npx",
+      "args": ["-y", "source-skeleton", "--mcp"]
+    }
+  }
+}
+```
+
+Everyone on the team gets source-skeleton as a native Claude Code tool without any manual setup.
+
+### Global Setup
+
+To make source-skeleton available across all your projects:
+
+```bash
+claude mcp add --scope user source-skeleton -- npx -y source-skeleton --mcp
+```
+
+Or with the CLI approach:
+
+```bash
+npm install -g source-skeleton
+source-skeleton --init --global
+```
+
+The `--global` flag targets `~/.claude/CLAUDE.md` so the instructions apply in every project.
 
 ## Requirements
 

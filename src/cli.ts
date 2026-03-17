@@ -3,8 +3,26 @@ import { existsSync, readFileSync } from 'node:fs';
 import { skeleton } from './skeleton.js';
 import { format, render } from './formatter.js';
 
+const HELP_TEXT = `Usage: source-skeleton <file.ts|file.js>
+       source-skeleton --mcp
+       source-skeleton --init [--global]
+       source-skeleton --help
+
+Options:
+  <file>     Generate skeleton view of a TypeScript/JavaScript file
+  --mcp      Start MCP server for Claude Code integration
+  --init     Add source-skeleton config to CLAUDE.md in current directory
+  --global   With --init: configure in ~/.claude/CLAUDE.md instead
+  --help     Show this help message
+`;
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+
+  if (args.includes('--help')) {
+    process.stdout.write(HELP_TEXT);
+    return;
+  }
 
   if (args[0] === '--mcp') {
     const { startMcpServer } = await import('./mcp.js');
@@ -12,8 +30,14 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (args.includes('--init')) {
+    const { init } = await import('./init.js');
+    init({ global: args.includes('--global') });
+    return;
+  }
+
   if (args.length !== 1) {
-    process.stderr.write('Usage: source-skeleton <file.ts|file.js>\n');
+    process.stderr.write('Usage: source-skeleton <file.ts|file.js>\n       Run source-skeleton --help for more options\n');
     process.exit(1);
   }
   
