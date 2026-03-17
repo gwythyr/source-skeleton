@@ -18,9 +18,11 @@ export function collapse(source: string): CollapseResult {
   // Find all function-like nodes by AST kind
   const nodeKinds = [
     'function_declaration',
-    'method_definition', 
+    'generator_function_declaration', // function* gen() {}
+    'method_definition',
     'arrow_function',
-    'function_expression', // function expression
+    'function_expression',
+    'generator_function', // const gen = function* () {}
   ];
 
   const functionNodes: SgNode[] = [];
@@ -59,7 +61,12 @@ export function collapse(source: string): CollapseResult {
 }
 
 function filterOutNested(nodes: SgNode[]): SgNode[] {
-  // For each node, check if its range is fully contained within another node's body
+  // Only collapse outermost function bodies. Inner callbacks (e.g. .forEach(item => { ... }))
+  // are skipped because their bodies are contained within an outer function body that will
+  // itself be collapsed. Trade-off: the original bin/skeleton tool using skeleton-rules-deep.yml
+  // collapsed nested callbacks too, showing them as separate collapsed entries. This approach
+  // produces a shallower but cleaner skeleton. Changing to collapse-all would require sorting
+  // edits innermost-first; ast-grep's commitEdits may not handle overlapping edits safely.
   const result: SgNode[] = [];
   
   for (let i = 0; i < nodes.length; i++) {

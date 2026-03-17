@@ -25,27 +25,14 @@ export function parseImports(source: string): ImportResult {
   }
 
   // Find constructor parameters with access modifiers (injected services)
-  // Look for constructor method_definition nodes
-  const constructors = root.findAll({ 
-    rule: { 
-      kind: 'method_definition',
-      has: { kind: 'property_identifier', pattern: 'constructor' }
-    }
-  });
-
-  // Alternative: search by pattern for constructor
-  // If the above doesn't work, fall back to finding all method_definitions and filtering
-  if (constructors.length === 0) {
-    const allMethods = root.findAll({ rule: { kind: 'method_definition' } });
-    for (const method of allMethods) {
-      const name = method.field('name');
-      if (name && name.text() === 'constructor') {
-        extractConstructorParams(method, injectedServices);
-      }
-    }
-  } else {
-    for (const ctor of constructors) {
-      extractConstructorParams(ctor, injectedServices);
+  // Scan all method_definition nodes and filter by name === 'constructor'.
+  // (A has-query with pattern: 'constructor' is a code pattern matcher, not a text matcher,
+  // and silently fails for the constructor keyword in tree-sitter-typescript.)
+  const allMethods = root.findAll({ rule: { kind: 'method_definition' } });
+  for (const method of allMethods) {
+    const name = method.field('name');
+    if (name && name.text() === 'constructor') {
+      extractConstructorParams(method, injectedServices);
     }
   }
 

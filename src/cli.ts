@@ -19,12 +19,16 @@ function main(): void {
     process.exit(1);
   }
   
-  const source = readFileSync(filePath, 'utf-8');
-  const result = skeleton(source);
-  const lines = format(result);
-  const output = render(lines);
-  
-  process.stdout.write(output);
+  try {
+    const source = readFileSync(filePath, 'utf-8');
+    const result = skeleton(source);
+    const lines = format(result);
+    const output = render(lines);
+    process.stdout.write(output);
+  } catch (err) {
+    process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.exit(1);
+  }
 }
 
 main();
