@@ -20,7 +20,7 @@ export function collapse(source: string): CollapseResult {
     'function_declaration',
     'method_definition', 
     'arrow_function',
-    'function', // function expression
+    'function_expression', // function expression
   ];
 
   const functionNodes: SgNode[] = [];
