@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { describe, it, expect, beforeAll } from 'vitest';
 import { skeleton, format, render } from '../src/index.js';
 import type { SkeletonResult, SkeletonLine } from '../src/index.js';
@@ -344,6 +345,20 @@ describe('CLI (dist/cli.js)', () => {
     expect(threw).toBe(true);
   });
 
+  it('no-args stderr also suggests --help', () => {
+    let threw = false;
+    try {
+      execSync(`node "${CLI}"`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
+    } catch (err: unknown) {
+      threw = true;
+      const e = err as { status: number; stderr: string };
+      expect(e.status).toBe(1);
+      // Should hint the user about --help
+      expect(e.stderr).toContain('--help');
+    }
+    expect(threw).toBe(true);
+  });
+
   it('exits 1 with file-not-found message for a nonexistent file', () => {
     let threw = false;
     try {
@@ -374,5 +389,52 @@ describe('CLI (dist/cli.js)', () => {
       expect(e.stderr).toContain('Usage:');
     }
     expect(threw).toBe(true);
+  });
+
+  it('--help exits 0 and prints usage information', () => {
+    const stdout = execSync(`node "${CLI}" --help`, { encoding: 'utf-8' });
+    expect(stdout).toContain('Usage:');
+    expect(stdout).toContain('--mcp');
+    expect(stdout).toContain('--init');
+    expect(stdout).toContain('--help');
+  });
+
+  it('--help output includes all three modes', () => {
+    const stdout = execSync(`node "${CLI}" --help`, { encoding: 'utf-8' });
+    // File mode
+    expect(stdout).toContain('<file');
+    // MCP mode
+    expect(stdout).toContain('--mcp');
+    // Init mode
+    expect(stdout).toContain('--init');
+  });
+
+  it('--init in a temp dir creates CLAUDE.md and exits 0', () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), 'ss-cli-init-test-'));
+    try {
+      const stdout = execSync(`node "${CLI}" --init`, {
+        encoding: 'utf-8',
+        cwd: tmpDir,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      expect(stdout).toMatch(/Created|Updated|already configured/);
+      expect(existsSync(join(tmpDir, 'CLAUDE.md'))).toBe(true);
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('--mcp flag does not produce a usage error (starts MCP server)', () => {
+    // --mcp starts a long-running server, so we spawn and kill it quickly.
+    // We just verify it does NOT exit with a usage error.
+    const result = spawnSync('node', [CLI, '--mcp'], {
+      encoding: 'utf-8',
+      timeout: 1000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      // stdin is a pipe — MCP server will block waiting for input then exit when pipe closes
+    });
+    // Either timed out (signal) or closed stdin caused it to exit — neither should be exit code 1 from usage
+    const usageError = result.stderr?.includes('Usage:') && result.status === 1;
+    expect(usageError).toBe(false);
   });
 });

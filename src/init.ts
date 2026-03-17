@@ -31,19 +31,23 @@ Example output:
 
 export interface InitOptions {
   global?: boolean;
+  /** Override process.cwd() — for testing only */
+  cwd?: string;
+  /** Override homedir() — for testing only */
+  homeDir?: string;
 }
 
 export function init(options: InitOptions = {}): void {
   let targetPath: string;
 
   if (options.global) {
-    const claudeDir = join(homedir(), '.claude');
+    const claudeDir = join(options.homeDir ?? homedir(), '.claude');
     if (!existsSync(claudeDir)) {
       mkdirSync(claudeDir, { recursive: true });
     }
     targetPath = join(claudeDir, 'CLAUDE.md');
   } else {
-    targetPath = join(process.cwd(), 'CLAUDE.md');
+    targetPath = join(options.cwd ?? process.cwd(), 'CLAUDE.md');
   }
 
   if (existsSync(targetPath)) {
