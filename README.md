@@ -9,6 +9,8 @@ Generate collapsed skeleton views of TypeScript/JavaScript files. Designed for A
 - Annotates collapsed blocks with external dependency calls (`→` arrows)
 - Maps skeleton lines back to original line numbers
 
+**Note:** Currently supports TypeScript and JavaScript. Support for other languages is planned.
+
 ## Install
 
 ```bash
