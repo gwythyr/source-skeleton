@@ -4,8 +4,8 @@
   "description": "Generate collapsed skeleton views of TypeScript/JavaScript files for AI coding agents",
   "type": "module",
   "bin": {
-    "source-skeleton": "./dist/cli.js",
-    "source-skeleton-mcp": "./dist/mcp-bin.js"
+    "source-skeleton": "dist/cli.js",
+    "source-skeleton-mcp": "dist/mcp-bin.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -35,7 +35,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/victorshymko/source-skeleton.git"
+    "url": "git+https://github.com/victorshymko/source-skeleton.git"
   },
   "exports": {
     ".": {
