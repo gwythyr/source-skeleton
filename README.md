@@ -1,15 +1,74 @@
 # source-skeleton
 
-Generate collapsed skeleton views of TypeScript/JavaScript files. Designed for AI coding agents to efficiently explore codebases.
+[![npm](https://img.shields.io/npm/v/source-skeleton)](https://www.npmjs.com/package/source-skeleton)
 
-## What it does
+Collapse TypeScript/JavaScript files to signatures + dependency graph. Built for AI coding agents.
 
-- Collapses function/method bodies to `{ /* ... */ }`
-- Preserves imports, types, interfaces, and signatures
-- Annotates collapsed blocks with external dependency calls (`→` arrows)
-- Maps skeleton lines back to original line numbers
+Large source files burn context tokens when fed to LLMs. Skeleton views give agents the structural understanding they need -- signatures, types, imports, and dependency graphs -- at a fraction of the cost. Line numbers reference the original file, so the agent can jump to the full implementation when needed.
 
-**Note:** Currently supports TypeScript and JavaScript. Support for other languages is planned.
+## Example
+
+A 74-line NestJS service ([`test/fixtures/real-world.ts`](test/fixtures/real-world.ts)):
+
+```text
+1   import { Injectable, NotFoundException } from '@nestjs/common';
+2   import { InjectRepository } from '@nestjs/typeorm';
+3   import { Repository, FindManyOptions } from 'typeorm';
+4   import { EventEmitter2 } from '@nestjs/event-emitter';
+5   import { HttpService } from '@nestjs/axios';
+6   import { ConfigService } from '@nestjs/config';
+7   import { firstValueFrom } from 'rxjs';
+8
+9   export interface Product {
+10    id: string;
+11    name: string;
+12    price: number;
+13    stock: number;
+14  }
+15
+16  export interface CreateProductDto {
+17    name: string;
+18    price: number;
+19    stock: number;
+20  }
+21
+22  @Injectable()
+23  export class ProductService {
+24    constructor(
+25      @InjectRepository(Product)
+26      private readonly productRepo: Repository<Product>,
+27      private readonly eventEmitter: EventEmitter2,
+28      private readonly httpService: HttpService,
+29      private readonly configService: ConfigService,
+30    ) { /* ... */ }
+31
+32    async findAll(options?: FindManyOptions<Product>): Promise<Product[]> { /* ... */ }
+      → productRepo.find()
+      → eventEmitter.emit()
+37
+38    async findOne(id: string): Promise<Product> { /* ... */ }
+      → productRepo.findOne()
+45
+46    async create(dto: CreateProductDto): Promise<Product> { /* ... */ }
+      → productRepo.create()
+      → productRepo.save()
+      → httpService.post()
+      → eventEmitter.emit()
+56
+57    async updateStock(id: string, delta: number): Promise<Product> { /* ... */ }
+      → productRepo.save()
+      → eventEmitter.emit()
+64
+65    async remove(id: string): Promise<void> { /* ... */ }
+      → productRepo.remove()
+      → eventEmitter.emit()
+70
+71    static validate(dto: CreateProductDto): boolean { /* ... */ }
+74  }
+75
+```
+
+Every method signature stays readable. The `→` arrows show which external dependencies each method calls -- both imported identifiers and constructor-injected services like `productRepo` and `eventEmitter`. You can see the full dependency graph of a class without reading a single method body. Need the actual implementation of `create`? Jump to line 46.
 
 ## Install
 
@@ -17,119 +76,62 @@ Generate collapsed skeleton views of TypeScript/JavaScript files. Designed for A
 npm install -g source-skeleton
 ```
 
-Or use with npx:
+Or without installing:
 
 ```bash
-npx source-skeleton src/service.ts
+npx source-skeleton <file>
 ```
 
-## Usage
-
-### CLI
-
-```bash
-source-skeleton <file.ts|file.js>
-```
-
-Example output for `src/skeleton.ts`:
+## CLI
 
 ```
-1	import { collapse } from './collapse.js';
-2	import { parseImports } from './imports.js';
-3	import { findExternalCalls } from './calls.js';
-4	import type { SkeletonResult } from './types.js';
-5
-6	/**
-7	 * Generate a skeleton view of TypeScript/JavaScript source code.
-8	 * Collapses function bodies and annotates external calls.
-9	 */
-10	export function skeleton(source: string): SkeletonResult { /* ... */ }
-	→ collapse()
-	→ parseImports()
-	→ findExternalCalls()
-28
+source-skeleton <file>            Skeleton view of a .ts/.js/.tsx/.jsx file
+source-skeleton --init            Add instructions to ./CLAUDE.md
+source-skeleton --init --global   Add instructions to ~/.claude/CLAUDE.md
+source-skeleton --uninit          Remove instructions from ./CLAUDE.md
+source-skeleton --uninit --global Remove instructions from ~/.claude/CLAUDE.md
+source-skeleton --mcp             Start MCP server (stdio transport)
+source-skeleton --help            Show help
 ```
 
-Example output for `src/formatter.ts`:
+## Agent Setup
+
+### Any agent with shell access
+
+Install globally and add `source-skeleton <file>` to your agent's system prompt or tool definitions. The output is plain text, tab-delimited, designed to be consumed as-is. Works with any agent that can execute shell commands -- Cursor, Windsurf, Cline, Copilot, or custom setups.
 
 ```
-1	import type { CollapsedBlock, ExternalCall, SkeletonResult, SkeletonLine } from './types.js';
-2
-3	const COLLAPSED_MARKER = /\{\s*\/\*\s*\.\.\.\s*\*\/\s*\}/;
-4
-5	/**
-6	 * Format a skeleton result into labeled, annotated output lines.
-7	 */
-8	export function format(result: SkeletonResult): SkeletonLine[] { /* ... */ }
-63
-64	/**
-65	 * Render formatted skeleton lines as a string (tab-delimited output).
-66	 */
-67	export function render(lines: SkeletonLine[]): string { /* ... */ }
-92
+# Example system prompt snippet
+When exploring unfamiliar code, run `source-skeleton <file>` to get a
+structural overview before reading the full implementation.
 ```
 
-### Programmatic API
+### Claude Code (recommended)
 
-```typescript
-import { skeleton, format, render } from 'source-skeleton';
-import { readFileSync } from 'node:fs';
-
-const source = readFileSync('service.ts', 'utf-8');
-const result = skeleton(source);
-const lines = format(result);
-const output = render(lines);
-console.log(output);
-```
-
-## Output Format
-
-Tab-delimited: `<line-number>\t<code>`
-
-Collapsed blocks are followed by `→ dependency()` annotation lines showing which external calls (imported identifiers or constructor-injected services) were made inside the collapsed body.
-
-## Use with AI Coding Agents
-
-Install globally and use `source-skeleton <file>` in your tool definitions or agent prompts to get compact, navigable overviews of large files without consuming excessive context.
-
-- **Claude Code**: see the [Claude Code Integration](#claude-code-integration) section below for setup options
-- **Codex / other agents**: install globally and reference in tool definitions
-
-## Claude Code Integration
-
-### Recommended: CLI + CLAUDE.md
-
-The most token-efficient way to use source-skeleton with Claude Code is via the CLI and CLAUDE.md. Claude Code already has a Bash tool — no extra setup or context overhead required.
-
-Install globally (or use `npx source-skeleton` for one-off runs):
+Claude Code already has a Bash tool, so no extra setup is needed beyond teaching it the command exists:
 
 ```bash
 npm install -g source-skeleton
+source-skeleton --init            # appends instructions to ./CLAUDE.md
 ```
 
-Then run `--init` in your project to append usage instructions to your project's CLAUDE.md:
+Commit the updated `CLAUDE.md` so your team gets it. For global setup across all projects:
 
 ```bash
-source-skeleton --init
+source-skeleton --init --global   # writes to ~/.claude/CLAUDE.md
 ```
 
-This adds a `## File Definitions (source-skeleton)` section to CLAUDE.md, instructing Claude to use `source-skeleton <file>` when exploring unfamiliar files. Claude uses its existing Bash tool to call it — no additional tool schema injected into context.
+Remove with `--uninit` (or `--uninit --global`).
 
-### Alternative: MCP
+### Claude Code via MCP
 
-If you prefer native MCP tool integration, you can register source-skeleton as an MCP server:
+If you prefer MCP tool integration over the CLI approach:
 
 ```bash
 claude mcp add source-skeleton -- npx -y source-skeleton --mcp
 ```
 
-This makes `source_skeleton` available as a dedicated tool Claude can invoke directly. However, MCP tools inject their schema into every conversation's context — even when the tool isn't used. For a simple file-in-text-out CLI like this, the Bash approach above is more efficient.
-
-### Team Setup
-
-**CLI approach (recommended):** Commit your project's CLAUDE.md (with the `--init`-generated section) to version control. Everyone on the team gets source-skeleton instructions automatically.
-
-**MCP approach:** Add a `.mcp.json` file to your project root and commit it:
+Or commit `.mcp.json` to your project root:
 
 ```json
 {
@@ -142,26 +144,65 @@ This makes `source_skeleton` available as a dedicated tool Claude can invoke dir
 }
 ```
 
-### Global Setup
+Note: MCP tools inject their schema into every conversation even when unused. The CLI approach above is more token-efficient.
 
-To make source-skeleton available across all your projects with the CLI approach:
+## Output Format
 
-```bash
-npm install -g source-skeleton
-source-skeleton --init --global
+Each output line is tab-delimited: `<original-line-number>\t<code>`.
+
+Collapsed blocks replace function bodies with `{ /* ... */ }`. Below each block, indented `→` lines list the external calls found in the original body. "External" means the callee is an imported identifier or a constructor-injected service -- calls to functions defined in the same file are excluded.
+
+The last line number in the output is the total length of the original file.
+
+## Programmatic API
+
+```typescript
+import { skeleton, format, render } from 'source-skeleton';
+import { readFileSync } from 'node:fs';
+
+const source = readFileSync('src/service.ts', 'utf-8');
+
+// skeleton(source: string): SkeletonResult
+const result = skeleton(source);
+// result.skeleton            — collapsed source text
+// result.collapsedBlocks     — { originalStartLine, originalEndLine }[]
+// result.externalCalls       — { callee, line }[]
+// result.externalIdentifiers — ReadonlySet<string> of imported names
+// result.injectedServices    — ReadonlySet<string> of constructor params
+
+// format(result: SkeletonResult): SkeletonLine[]
+const lines = format(result);
+
+// render(lines: SkeletonLine[]): string
+const output = render(lines);   // tab-delimited, ready to print
+console.log(output);
 ```
 
-The `--global` flag targets `~/.claude/CLAUDE.md` so the instructions apply in every project.
+Exported types: `SkeletonResult`, `SkeletonLine`, `CollapsedBlock`, `ExternalCall`.
 
-To register globally as an MCP server instead:
+## How It Works
 
-```bash
-claude mcp add --scope user source-skeleton -- npx -y source-skeleton --mcp
-```
+Three-phase pipeline powered by [ast-grep](https://ast-grep.github.io/):
+
+1. **Collapse** — Parse the AST, find function-like nodes (functions, methods, arrows), replace bodies with `{ /* ... */ }`, record original line ranges.
+2. **Import analysis** — Extract imported identifiers and constructor parameter names to build the set of "external" symbols.
+3. **Call annotation** — Scan the original source for call expressions referencing external symbols, attach them to the collapsed block they belong to.
 
 ## Requirements
 
-- Node.js >= 18
+Node.js >= 18. TypeScript and JavaScript (including JSX/TSX).
+
+## Development
+
+```bash
+git clone https://github.com/gwythyr/source-skeleton.git
+cd source-skeleton
+npm install
+npm run build          # tsc -> dist/
+npm test               # vitest
+npm run check          # type-check without emitting
+npm run ci             # check + lint + test
+```
 
 ## License
 
